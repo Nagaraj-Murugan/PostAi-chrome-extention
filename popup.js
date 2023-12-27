@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", function () {
       "image_list",
       Array.from(images)
         .map((img) => img.src)
-        .join(", ")
+        .join(",")
     );
 
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {

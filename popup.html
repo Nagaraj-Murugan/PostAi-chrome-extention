@@ -76,6 +76,16 @@
         class="error-message mt-4"
         style="display: none"
       ></div>
+
+      <div id="uploadedImagesContainer"></div>
+      <label
+        for="filesInput"
+        id="chooseFileLabel"
+        class="btn btn-info mt-3"
+        style="display: none"
+        >Choose File</label
+      >
+
       <div id="generateVideoButtonContainer" style="display: none">
         <button id="generateVideoButton" class="btn btn-success mt-3">
           Generate Video
@@ -87,17 +97,7 @@
           style="display: none"
         ></progress>
         <div id="imageList" style="background-color: white"></div>
-        <div id="uploadedImagesContainer"></div>
       </div>
-
-      <!-- Add the "Choose File" input here -->
-      <label
-        for="filesInput"
-        id="chooseFileLabel"
-        class="btn btn-info mt-3"
-        style="display: none"
-        >Choose File</label
-      >
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>

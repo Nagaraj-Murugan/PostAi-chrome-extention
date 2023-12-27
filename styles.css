@@ -163,3 +163,14 @@ input[type="radio"] {
   background-color: #577ea2;
   color: #fff;
 }
+
+.uploaded-image {
+  max-width: 100%; /* Set the maximum width to 100% of the container */
+  height: auto; /* Allow the height to adjust proportionally */
+  margin-bottom: 10px; /* Add some margin for spacing between images */
+}
+
+#uploadedImagesContainer {
+  display: flex;
+  flex-wrap: wrap;
+}
