@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   var baseUrl =
-    "https://0ba4-2405-201-e005-5a64-e1b8-c6cc-3cd0-aaf8.ngrok-free.app";
+    "https://8b10-2405-201-e005-5a64-d8a4-b59b-4450-da2e.ngrok-free.app";
 
   var getSummaryButton = document.getElementById("getSummaryButton");
   var summaryResult = document.getElementById("summaryResult");
@@ -15,6 +15,8 @@ document.addEventListener("DOMContentLoaded", function () {
     "uploadedImagesContainer"
   );
   var filesInput = document.getElementById("filesInput");
+  var selectedMood; // Define selectedMood as a global variable
+  var title, summary; // Define title and summary as global variables
 
   var transactionId;
   var intervalId;
@@ -23,9 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
     getSummaryButton.disabled = true;
 
     var moodRadioButtons = document.getElementsByName("mood");
-    var selectedMood = Array.from(moodRadioButtons).find(
-      (radio) => radio.checked
-    );
+    selectedMood = Array.from(moodRadioButtons).find((radio) => radio.checked);
 
     if (!selectedMood) {
       alert("Please select a mood before clicking Get Summary.");
@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function () {
               <p id="summaryDisplay" style="display: none;"><strong>Summary:</strong> <span class="loading-spinner"></span></p>
             </div>
           `;
-          intervalId = setInterval(callSecondApi, 20000);
+          intervalId = setInterval(callSecondApi, 10000);
           getSummaryButton.disabled = false;
         })
         .catch((error) => {
@@ -113,7 +113,12 @@ document.addEventListener("DOMContentLoaded", function () {
             loadingSpinner.style.display = "none";
             displaySummary(data);
             showGenerateVideoButton();
+            showChooseFileButton(); // Add this line to show the "Choose File" button
           }
+        }
+        function showChooseFileButton() {
+          var chooseFileLabel = document.getElementById("chooseFileLabel");
+          chooseFileLabel.style.display = "block";
         }
       })
       .catch((error) => {
@@ -162,15 +167,16 @@ document.addEventListener("DOMContentLoaded", function () {
     var images = document.querySelectorAll(".preview-image");
     var files = document.getElementById("filesInput").files;
 
-    var selectedMood = document.querySelector('input[name="mood"]:checked');
     var formData = new FormData();
     formData.append("mood", selectedMood.value);
     formData.append("title", title);
     formData.append("summary", summary);
-
-    images.forEach((img, index) => {
-      formData.append(`image${index + 1}`, img.src);
-    });
+    formData.append(
+      "image_list",
+      Array.from(images)
+        .map((img) => img.src)
+        .join(", ")
+    );
 
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       var currentTab = tabs[0];
