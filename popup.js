@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   var baseUrl =
-    "https://8b10-2405-201-e005-5a64-d8a4-b59b-4450-da2e.ngrok-free.app";
+    "https://0ba4-2405-201-e005-5a64-e1b8-c6cc-3cd0-aaf8.ngrok-free.app";
 
   var getSummaryButton = document.getElementById("getSummaryButton");
   var summaryResult = document.getElementById("summaryResult");
@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var uploadedImagesContainer = document.getElementById(
     "uploadedImagesContainer"
   );
+  var filesInput = document.getElementById("filesInput");
 
   var transactionId;
   var intervalId;
@@ -137,7 +138,6 @@ document.addEventListener("DOMContentLoaded", function () {
       <p><strong>Status:</strong> ${data.status}</p>
       <p><strong>Images:</strong></p>
       <ul id="imageList" style="background-color: black;"></ul>
-      <input type="file" id="filesInput" multiple accept=".png, .jpg, .jpeg, .svg, .webp" />
     </div>
   `;
 
@@ -229,5 +229,31 @@ document.addEventListener("DOMContentLoaded", function () {
 
   document.querySelectorAll(".mood-label").forEach(function (label) {
     label.addEventListener("click", handleMoodLabelClick);
+  });
+
+  filesInput.addEventListener("change", function () {
+    var files = filesInput.files;
+
+    uploadedImagesContainer.innerHTML = ""; // Clear previous previews
+
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+
+      // Create a FileReader to read the selected file
+      var reader = new FileReader();
+
+      reader.onload = function (e) {
+        // Create an image element for the preview
+        var imgElement = document.createElement("img");
+        imgElement.src = e.target.result;
+        imgElement.classList.add("uploaded-image");
+
+        // Append the image preview to the container
+        uploadedImagesContainer.appendChild(imgElement);
+      };
+
+      // Read the selected file as a data URL
+      reader.readAsDataURL(file);
+    }
   });
 });
