@@ -160,17 +160,30 @@ input[type="radio"] {
 }
 
 .mood-label.selected {
-  background-color: #577ea2;
+  background-color: #28a745;
   color: #fff;
 }
 
 .uploaded-image {
-  max-width: 100%; /* Set the maximum width to 100% of the container */
-  height: auto; /* Allow the height to adjust proportionally */
-  margin-bottom: 10px; /* Add some margin for spacing between images */
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 10px;
 }
 
 #uploadedImagesContainer {
   display: flex;
   flex-wrap: wrap;
+}
+
+#selectImageAll,
+#selectImageNone {
+  margin-left: 10px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+#selectImageAll:hover,
+#selectImageNone:hover {
+  background-color: #007bff;
+  color: #fff;
 }

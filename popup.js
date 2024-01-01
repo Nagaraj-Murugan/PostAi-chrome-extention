@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   var baseUrl =
-    "https://8b10-2405-201-e005-5a64-d8a4-b59b-4450-da2e.ngrok-free.app";
+    "https://c9b2-2405-201-e005-5a64-8151-bc75-578d-e4a0.ngrok-free.app/";
 
   var getSummaryButton = document.getElementById("getSummaryButton");
   var summaryResult = document.getElementById("summaryResult");
@@ -15,11 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
     "uploadedImagesContainer"
   );
   var filesInput = document.getElementById("filesInput");
-  var selectedMood; // Define selectedMood as a global variable
-  var title, summary; // Define title and summary as global variables
-
-  var transactionId;
-  var intervalId;
+  var selectedMood;
 
   getSummaryButton.addEventListener("click", function () {
     getSummaryButton.disabled = true;
@@ -33,6 +29,14 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    // Remove the 'selected' class from all mood labels
+    document.querySelectorAll(".mood-label").forEach((label) => {
+      label.classList.remove("selected");
+    });
+
+    // Add the 'selected' class to the selected mood label
+    selectedMood.closest(".mood-label").classList.add("selected");
+
     var moodText = selectedMood.value;
 
     loadingSpinner.style.display = "block";
@@ -42,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
       var currentTab = tabs[0];
       var url = currentTab.url;
 
-      fetch(`${baseUrl}/v2/generate_summary`, {
+      fetch(`${baseUrl}v2/generate_summary`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -87,7 +91,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   function callSecondApi() {
-    fetch(`${baseUrl}/v2/inquire_summary/${transactionId}`, {
+    fetch(`${baseUrl}v2/inquire_summary/${transactionId}`, {
       method: "GET",
       timeout: 10000,
       headers: {
@@ -113,9 +117,11 @@ document.addEventListener("DOMContentLoaded", function () {
             loadingSpinner.style.display = "none";
             displaySummary(data);
             showGenerateVideoButton();
-            showChooseFileButton(); // Add this line to show the "Choose File" button
+            showChooseFileButton();
+            selectedImageUrls = data.images; // Updated to use images from the response
           }
         }
+
         function showChooseFileButton() {
           var chooseFileLabel = document.getElementById("chooseFileLabel");
           chooseFileLabel.style.display = "block";
@@ -148,10 +154,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
     var imageList = document.getElementById("imageList");
     data.images.forEach((imageUrl) => {
+      var listItem = document.createElement("li");
+
+      var checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = imageUrl;
+      checkbox.classList.add("image-checkbox");
+
       var imgElement = document.createElement("img");
       imgElement.src = imageUrl;
       imgElement.classList.add("preview-image");
-      imageList.appendChild(imgElement);
+
+      listItem.appendChild(checkbox);
+      listItem.appendChild(imgElement);
+      imageList.appendChild(listItem);
     });
   }
 
@@ -164,19 +180,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     var title = document.getElementById("titleDisplay").innerText;
     var summary = document.getElementById("summaryDisplay").innerText;
-    var images = document.querySelectorAll(".preview-image");
     var files = document.getElementById("filesInput").files;
+    var selectedImageCheckboxes = document.querySelectorAll(
+      ".image-checkbox:checked"
+    );
+    var selectedImageUrls = Array.from(selectedImageCheckboxes).map(
+      (checkbox) => checkbox.value
+    );
 
-    var formData = new FormData();
+    var formData = new FormData(); // Corrected: Move the creation here
     formData.append("mood", selectedMood.value);
     formData.append("title", title);
     formData.append("summary", summary);
-    formData.append(
-      "image_list",
-      Array.from(images)
-        .map((img) => img.src)
-        .join(",")
-    );
+    formData.append("image_list", selectedImageUrls.join(",")); // Use selectedImageUrls directly
 
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       var currentTab = tabs[0];
@@ -187,12 +203,10 @@ document.addEventListener("DOMContentLoaded", function () {
         formData.append("files", files[i]);
       }
 
-      fetch(`${baseUrl}/v2/generate_video`, {
+      fetch(`${baseUrl}v2/generate_video`, {
         method: "POST",
         body: formData,
-        headers: {
-          // Note: No need to set Content-Type for FormData
-        },
+        headers: {},
       })
         .then((response) => {
           if (!response.ok) {
@@ -225,41 +239,133 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  function handleMoodLabelClick(event) {
-    document.querySelectorAll(".mood-label").forEach(function (label) {
-      label.classList.remove("selected");
-    });
+  function handleImageClick(event) {
+    if (selectImageCheckbox.checked) {
+      var clickedImage = event.target;
 
-    event.currentTarget.classList.add("selected");
+      if (clickedImage.tagName === "IMG") {
+        var imageUrl = clickedImage.src;
+
+        if (clickedImage.classList.contains("selected-image")) {
+          // Image was selected, remove from the array and the selected-image class
+          selectedImageUrls = selectedImageUrls.filter(
+            (url) => url !== imageUrl
+          );
+          clickedImage.classList.remove("selected-image");
+        } else {
+          // Image was not selected, add to the array and add the selected-image class
+          selectedImageUrls.push(imageUrl);
+          clickedImage.classList.add("selected-image");
+        }
+
+        generateVideoButton.disabled = selectedImageUrls.length === 0;
+        console.log("Selected Image URLs:", selectedImageUrls);
+      }
+    }
   }
 
-  document.querySelectorAll(".mood-label").forEach(function (label) {
-    label.addEventListener("click", handleMoodLabelClick);
+  document
+    .getElementById("imageList")
+    .addEventListener("click", handleImageClick);
+
+  uploadedImagesContainer.addEventListener("click", function (event) {
+    if (selectImageCheckbox.checked) {
+      var clickedImage = event.target;
+
+      if (clickedImage.tagName === "IMG") {
+        var imageUrl = clickedImage.src;
+
+        if (clickedImage.classList.contains("selected-image")) {
+          // Image was selected, remove from the array and the selected-image class
+          selectedImageUrls = selectedImageUrls.filter(
+            (url) => url !== imageUrl
+          );
+          clickedImage.classList.remove("selected-image");
+        } else {
+          // Image was not selected, add to the array and add the selected-image class
+          selectedImageUrls.push(imageUrl);
+          clickedImage.classList.add("selected-image");
+        }
+
+        generateVideoButton.disabled = selectedImageUrls.length === 0;
+        console.log("Selected Image URLs:", selectedImageUrls);
+      }
+    }
   });
 
   filesInput.addEventListener("change", function () {
     var files = filesInput.files;
 
-    uploadedImagesContainer.innerHTML = ""; // Clear previous previews
+    uploadedImagesContainer.innerHTML = "";
+    selectedImageUrls = []; // Reset selectedImageUrls
 
-    for (var i = 0; i < files.length; i++) {
+    for (var i = 0; files && i < files.length; i++) {
+      // Check for file format before proceeding
+      var allowedFormats = [".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tiff"];
+      var fileName = files[i].name.toLowerCase();
+      var fileExtension = fileName.slice(
+        ((fileName.lastIndexOf(".") - 1) >>> 0) + 2
+      );
+
+      if (!allowedFormats.includes("." + fileExtension)) {
+        alert("Invalid file format. Please select a valid image file.");
+        filesInput.value = null; // Clear the input field
+        generateVideoButton.disabled = true; // Disable generate video button
+        return;
+      }
+
+      // Limit to selecting only two files
+      if (i >= 2) {
+        alert("You can select only two files.");
+        filesInput.value = null; // Clear the input field
+        generateVideoButton.disabled = true; // Disable generate video button
+        return;
+      }
+
       var file = files[i];
 
-      // Create a FileReader to read the selected file
       var reader = new FileReader();
 
       reader.onload = function (e) {
-        // Create an image element for the preview
         var imgElement = document.createElement("img");
         imgElement.src = e.target.result;
         imgElement.classList.add("uploaded-image");
-
-        // Append the image preview to the container
         uploadedImagesContainer.appendChild(imgElement);
       };
-
-      // Read the selected file as a data URL
       reader.readAsDataURL(file);
     }
+
+    // Enable generate video button only if files are selected
+    generateVideoButton.disabled = files.length === 0;
+  });
+
+  selectImageCheckbox.addEventListener("change", function () {
+    if (this.checked) {
+      selectImageContainer.style.display = "block";
+    } else {
+      selectImageContainer.style.display = "none";
+    }
+  });
+
+  selectImageAllButton.addEventListener("click", function () {
+    document.querySelectorAll(".uploaded-image").forEach(function (img) {
+      img.classList.add("selected-image");
+      var imageUrl = img.src;
+      if (!selectedImageUrls.includes(imageUrl)) {
+        selectedImageUrls.push(imageUrl);
+      }
+    });
+
+    generateVideoButton.disabled = selectedImageUrls.length === 0;
+  });
+
+  selectImageNoneButton.addEventListener("click", function () {
+    document.querySelectorAll(".uploaded-image").forEach(function (img) {
+      img.classList.remove("selected-image");
+      var imageUrl = img.src;
+      selectedImageUrls = selectedImageUrls.filter((url) => url !== imageUrl);
+    });
+
+    generateVideoButton.disabled = true;
   });
 });
